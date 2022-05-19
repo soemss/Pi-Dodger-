@@ -22,7 +22,7 @@ bg = pygame.image.load("assets/background.png")
 enemyModel = [
     "assets/enemyRed.png", "assets/enemyWhite.png", "assets/enemyOrange.png"
 ]
-crashSound = pygame.mixer.Sound()
+crashSound = pygame.mixer.Sound("explosion.mp3")
 fps = 30
 
 

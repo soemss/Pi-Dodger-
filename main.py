@@ -127,19 +127,20 @@ class Boss(pygame.sprite.Sprite):
 			super(Boss, self).__init__()
 			self.name = "Boss"
 			self.image_boss = pygame.image.load("assets/boss.png")
+			self.image_new = self.image_boss
 			self.rect = self.image_boss.get_rect()
 			self.rect.x = 280
-			self.rect.y = 600
-			self.speed = 3
-			self.image_new = self.image_boss
+			self.rect.y = 630
 			self.angle = 0
-			self.ramming = False
+			self.speed = 3
+		
 			self.dt = None
+			self.ramming = False
 			self.step = [0,0]
 			self.rammingCounter = 0
 			self.stopX = 0
 			self.stopY = 0
-			self.appearance = [280,600]
+			self.appearance = [280,630]
 			self.moving = True
 			self.swerveCounter = 0
 	def ram_car(self, playerX, playerY):
@@ -163,7 +164,8 @@ class Boss(pygame.sprite.Sprite):
 		image = self.image_new
 		self.dt = dt
 
-		self.image_new = pygame.transform.rotozoom(self.image_boss, self.step[0] * self.speed * -1.5, 1)
+		self.image_new = pygame.transform.rotozoom(self.image_boss, self.step[0] * self.speed * -1, 1)
+		
 		if self.ramming:
 			if self.rammingCounter == 0:
 				self.stopX = playerX
@@ -201,7 +203,7 @@ class Enemy(pygame.sprite.Sprite):
 			self.name = "Enemy"
 			self.image = pygame.image.load(random.choice(enemyModel))
 			self.rect = self.image.get_rect()
-			self.rect.x = random.randrange(75, 425)
+			self.rect.x = random.randrange(75, 525)
 			self.rect.y = -200
 			self.speed = random.randrange(7, 11)
 
@@ -278,45 +280,49 @@ def game():
 	enemies = []
 	boss = Boss()
 	enemies.insert(0, boss)
-	# cooldown = 0
+	cooldown = False
 
 	prev_time = time.time()
 
 	while running:
-			# print (player.rect)
-			background()
-			dt = time.time() - prev_time
-			dt *= gameSpeed
-			prev_time = time.time()
-			startTicks = pygame.time.get_ticks()
-			print(f"fps {gameSpeed}")
-			# steerControl = getOrientation()
-			if startTicks > newTick:
-					enemies.insert(0, Enemy())
-					newTick = startTicks + 2000
-					if score % 15 == 0 and score > 0:
-							enemies.insert(0, Enemy())
-							newTick = startTicks + 1500
-							gameSpeed += 10
-						
-			# if score > 9:
-			if score % 10 == 0:
+		# print (player.rect)
+		background()
+		dt = time.time() - prev_time
+		dt *= gameSpeed
+		prev_time = time.time()
+		startTicks = pygame.time.get_ticks()
+		print(f"fps {gameSpeed}")
+		# steerControl = getOrientation()
+		if startTicks > newTick:
+			enemies.insert(0, Enemy())
+			newTick = startTicks + 2000
+			if score % 15 == 0 and score > 0:
+				enemies.insert(0, Enemy())
+				newTick = startTicks + 1500
+				gameSpeed += 10
+					
+		if score % 10 == 0 and score > 0:
+			cooldown = score
+			if score % 5 == 0 and score - cooldown < 15:
 				boss.ramming = True
-
-			# enemy collision
-			for count, enemy in enumerate(enemies):
-					enemy.update(dt, player.rect.x, player.rect.y)
-					if player.rect.colliderect(enemy.rect):
-							screen.blit(scoreboardIco, (screenWidth / 2 - scoreboardIco.get_width() / 2, 40))
-							scoreValue = font.render(str(score), False, (255, 255, 255))
-							screen.blit(scoreText, (screenWidth / 2 - scoreText.get_width() / 2, 245))						
-							screen.blit(scoreValue, (screenWidth / 2 - scoreValue.get_width() / 2, 305))
-							pygame.mixer.Sound.play(crashSound)
-							gameOver()
-							running = False
-					if enemy.rect.y > 600 and enemy.name == "Enemy":
-							del enemies[count]
-							break
+			# if score % 10 == 0:
+			# 	boss.ramming = True
+				
+		# enemy collision
+		for count, enemy in enumerate(enemies):
+			enemy.update(dt, player.rect.x, player.rect.y)
+			if player.rect.colliderect(enemy.rect):
+				screen.blit(scoreboardIco, (screenWidth / 2 - scoreboardIco.get_width() / 2, 40))
+				scoreValue = font.render(str(score), False, (255, 255, 255))
+				screen.blit(scoreText, (screenWidth / 2 - scoreText.get_width() / 2, 245))						
+				screen.blit(scoreValue, (screenWidth / 2 - scoreValue.get_width() / 2, 305))
+				pygame.mixer.Sound.play(crashSound)
+				gameOver()
+				running = False
+			if enemy.rect.y > 600 and enemy.name == "Enemy":
+				del enemies[count]
+				break
+			print(enemies)
 			# Ends program when x is pressed
 			for event in pygame.event.get():
 					if event.type == pygame.QUIT:
@@ -324,11 +330,11 @@ def game():
 					elif event.type == timer_event:
 							score += 1
 			# update functions
-			screen.blit(font.render(str(score), False, (255, 255, 255)), (50, 25))
-			print (player.rect.x, player.rect.y)
-			player.update(dt)
-			# boss.update(dt, player.rect.x, player.rect.y)
-			pygame.display.flip()
-			clock.tick(30)
+		screen.blit(font.render(str(score), False, (255, 255, 255)), (50, 25))
+		print (player.rect.x, player.rect.y)
+		player.update(dt)
+		# boss.update(dt, player.rect.x, player.rect.y)
+		pygame.display.flip()
+		clock.tick(30)
 
 menu()

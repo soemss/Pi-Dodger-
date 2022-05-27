@@ -29,6 +29,7 @@ restartIco = pygame.image.load("assets/restartIco.png")
 playIco = pygame.image.load("assets/playIco.png")
 scoreboardIco = pygame.image.load("assets/scoreboard.png")
 crashSound = pygame.mixer.Sound("assets/explosion.wav")
+crashSound.set_volume(0.4)
 menuTitle = font.render('Vehicle', False, (255, 255, 255))
 menuTitle2 = font.render('Dodge', False, (255, 255, 255))
 g = font.render("Game", False, (255, 0, 0))
@@ -126,8 +127,8 @@ class Player(pygame.sprite.Sprite):
 			if self.rect.x <= 10:
 					self.rect.x = 10
 					self.velocity.x += 1.1 * dt
-			if self.rect.x >= 445:
-					self.rect.x = 445
+			if self.rect.x >= 545:
+					self.rect.x = 545
 					self.velocity.x -= 1.1 * dt
 			if self.rect.y <= 0:
 					self.rect.y = 0
@@ -183,9 +184,9 @@ class Boss(pygame.sprite.Sprite):
 		
 			self.ram_car(self.appearance[0], self.appearance[1])
 			image = self.image_boss
-		print (touchingPos(self.rect.x, self.stopX, self.rect.y, self.stopY))
-		print (self.stopX, self.stopY)
-		print (self.rect)
+		# print (touchingPos(self.rect.x, self.stopX, self.rect.y, self.stopY))
+		# print (self.stopX, self.stopY)
+		# print (self.rect)
 
 		if self.ramming and touchingPos(self.rect.x, self.stopX, self.rect.y, self.stopY):
 				self.moving = False
@@ -263,7 +264,7 @@ def gameOver():
 				if event.type == MOUSEBUTTONDOWN:
 						if event.button == 1:
 								click = True
-		pygame.display.flip()
+		pygame.display.flip()  
 
 def game():
 	player = Player()
@@ -277,27 +278,27 @@ def game():
 	newTick = 0
 	boss = Boss()
 
-	cooldown = 0
+	# cooldown = 0
 
 	enemies = []
 	prev_time = time.time()
 
 	while running:
-			print (player.rect)
+			# print (player.rect)
 			background()
 			dt = time.time() - prev_time
 			dt *= gameSpeed
 			prev_time = time.time()
 			startTicks = pygame.time.get_ticks()
-			print(gameSpeed)
+			print(f"fps {gameSpeed}")
 			# steerControl = getOrientation()
 			if startTicks > newTick:
 					enemies.insert(0, Enemy())
 					newTick = startTicks + 2000
-					if score % 15 == 0:
+					if score % 15 == 0 and score > 0:
 							enemies.insert(0, Enemy())
 							newTick = startTicks + 1500
-							gameSpeed += 15
+							gameSpeed += 10
 						
 			# if score > 9:
 			if score % 10 == 0:

@@ -3,8 +3,8 @@ import math
 import time
 import random
 from pygame.locals import *
+from scripts.config import *
 # from scripts.ui import *
-# from scripts.config import *
 
 # from sense_hat import SenseHat
 # import RTIMU
@@ -12,30 +12,14 @@ from pygame.locals import *
 # sense = SenseHat()
 
 # initialize variables
-pygame.init()
-
 screenWidth = 600
 screenHeight = 600
 screen = pygame.display.set_mode((screenWidth, screenHeight), pygame.RESIZABLE)
-font = pygame.font.Font("assets/arcade_font.TTF", 50)
 clock = pygame.time.Clock()
 startTicks = pygame.time.get_ticks()
 timer_event = pygame.USEREVENT + 1
 scrollY = 0
 pygame.time.set_timer(timer_event, 1000)
-bg = pygame.image.load("assets/background.png")
-enemyModel = ["assets/enemyRed.png", "assets/enemyWhite.png", "assets/enemyOrange.png"]
-restartIco = pygame.image.load("assets/restartIco.png")
-playIco = pygame.image.load("assets/playIco.png")
-scoreboardIco = pygame.image.load("assets/scoreboard.png")
-crashSound = pygame.mixer.Sound("assets/explosion.wav")
-crashSound.set_volume(0.4)
-menuTitle = font.render('Vehicle', False, (255, 255, 255))
-menuTitle2 = font.render('Dodge', False, (255, 255, 255))
-g = font.render("Game", False, (255, 0, 0))
-over = font.render("Over", False, (255, 0, 0))
-restartText = font.render("Retry", False, (0, 0, 0))
-scoreText = font.render("Score", False, (255, 255, 255))
 fps = 30
 
 mode = "raw"  # "bounded" or "raw"
@@ -58,8 +42,9 @@ mode = "raw"  # "bounded" or "raw"
 # 			y = (orientation['y'])
 # 	info = [x, y]
 # 	return info
+
 def touchingPos (x1, x2, y1, y2):
-	return ((x1 <= x2 + 20 and x1 >= x2 - 20) and (y1 <= y2 + 20 and y1>= y2 - 20))
+	return ((x1 <= x2 + 40 and x1 >= x2 - 40) and (y1 <= y2 + 60 and y1>= y2 - 10))
 def calcAngle(self, playerX, playerY):
     angle = math.atan2(-(playerY - self.rect.y), playerX - self.rect.x)
     stepX = (math.cos(angle) * self.speed)
@@ -86,7 +71,7 @@ class Player(pygame.sprite.Sprite):
 		self.velocity = pygame.math.Vector2(0, 0)
 		self.steering = False
 		self.rect.x = 250
-		self.rect.y = 100
+		self.rect.y = 400
 	def movement(self):
 		# steerControl = getOrientation("raw")
 		# steerX = steerControl[0]
@@ -112,7 +97,6 @@ class Player(pygame.sprite.Sprite):
 									
 	def update(self, dt):
 			self.movement()
-
 			self.image_new = pygame.transform.rotate(self.image, -self.velocity.x * 1.5)
 			screen.blit(self.image_new, self.rect)
 			self.rect.x += round(self.velocity.x) * dt
@@ -138,11 +122,10 @@ class Player(pygame.sprite.Sprite):
 					self.velocity.y -= 1.1 * dt
 
 
-
-
 class Boss(pygame.sprite.Sprite):
 	def __init__(self):
 			super(Boss, self).__init__()
+			self.name = "Boss"
 			self.image_boss = pygame.image.load("assets/boss.png")
 			self.rect = self.image_boss.get_rect()
 			self.rect.x = 280
@@ -158,6 +141,7 @@ class Boss(pygame.sprite.Sprite):
 			self.stopY = 0
 			self.appearance = [280,600]
 			self.moving = True
+			self.swerveCounter = 0
 	def ram_car(self, playerX, playerY):
 		step = calcAngle(self, playerX, playerY)
 		self.angle = step[2]
@@ -166,21 +150,31 @@ class Boss(pygame.sprite.Sprite):
 	def control(self, x, y):
 		self.rect.x += x * self.dt * self.speed
 		self.rect.y -= y * self.dt * self.speed
-
-	def update(self, dt, playerX, playerY, score):
+		self.speed += .1
+	
+	def update(self, dt, playerX, playerY):
+		if self.swerveCounter % 2 == 0:
+			self.rect.x += 1
+			self.speed += .1
+		else:
+			self.rect.x -= 1
+			self.speed -= .1
 		
 		image = self.image_new
 		self.dt = dt
 
-		self.image_new = pygame.transform.rotozoom(self.image_boss, self.angle, 1)
+		self.image_new = pygame.transform.rotozoom(self.image_boss, self.step[0] * self.speed * -1.5, 1)
 		if self.ramming:
 			if self.rammingCounter == 0:
 				self.stopX = playerX
 				self.stopY = playerY
 				self.ram_car(self.stopX, self.stopY)
+				self.speed = 0
 			self.rammingCounter = 1
 		elif not math.isclose(self.rect.x, 280) and not math.isclose(self.rect.y, 500):
 			self.rammingCounter = 0
+			
+			self.swerveCounter += 1
 		
 			self.ram_car(self.appearance[0], self.appearance[1])
 			image = self.image_boss
@@ -202,19 +196,18 @@ class Boss(pygame.sprite.Sprite):
 
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self):
-        super(Enemy, self).__init__()
-        self.image = pygame.image.load(random.choice(enemyModel))
-        self.rect = self.image.get_rect()
-        self.rect.x = random.randrange(75, 425)
-        self.rect.y = -200
-        self.speed = random.randrange(7, 11)
+	def __init__(self):
+			super(Enemy, self).__init__()
+			self.name = "Enemy"
+			self.image = pygame.image.load(random.choice(enemyModel))
+			self.rect = self.image.get_rect()
+			self.rect.x = random.randrange(75, 425)
+			self.rect.y = -200
+			self.speed = random.randrange(7, 11)
 
-    def draw_enemy(self):
-        screen.blit(self.image, self.rect)
-
-    def update(self, dt):
-        self.rect.y += self.speed * dt
+	def update(self, dt, playerX, playerY):
+			self.rect.y += self.speed * dt
+			screen.blit(self.image, self.rect)
 
 def menu():
 	
@@ -242,6 +235,7 @@ def menu():
 		pygame.display.flip()
 
 
+
 def gameOver():
 	click = False
 	while True:
@@ -249,11 +243,16 @@ def gameOver():
 		screen.blit(g, (screenWidth / 2 - g.get_width() / 2, 70))
 
 		mouse = pygame.mouse.get_pos()
-		restartButton = pygame.Rect(screenWidth / 2 - 50, 460, 250, 60)
+		restartButton = pygame.Rect(screenWidth / 2 + 50, 460, 250, 60)
+		menuButton = pygame.Rect(screenWidth / 2 - 150, 460, 250, 60)
 		if restartButton.collidepoint((mouse[0], mouse[1])):
 				if click:
 						game()
-		screen.blit(restartIco, (screenWidth / 2 - 50, 460))
+		if menuButton.collidepoint((mouse[0], mouse[1])):
+				if click:
+						menu()
+		screen.blit(restartIco, (screenWidth / 2 + 50, 460))
+		screen.blit(menuIco, (screenWidth / 2 - 150, 460))
 		# pygame.draw.rect(screen, (255, 255, 255), restart)
 		# screen.blit(restartText, (restart.centerx - restartText.get_width() / 2, restart.y + 7))
 		click = False
@@ -266,21 +265,21 @@ def gameOver():
 								click = True
 		pygame.display.flip()  
 
+
 def game():
-	player = Player()
-
 	gameSpeed = 30
-
 	running = True
-	player_list = pygame.sprite.Group()
-	player_list.add(player)
 	score = 0
 	newTick = 0
+	
+	player = Player()
+	player_list = pygame.sprite.Group()
+	player_list.add(player)
+	enemies = []
 	boss = Boss()
-
+	enemies.insert(0, boss)
 	# cooldown = 0
 
-	enemies = []
 	prev_time = time.time()
 
 	while running:
@@ -304,9 +303,9 @@ def game():
 			if score % 10 == 0:
 				boss.ramming = True
 
+			# enemy collision
 			for count, enemy in enumerate(enemies):
-					enemy.update(dt)
-					enemy.draw_enemy()
+					enemy.update(dt, player.rect.x, player.rect.y)
 					if player.rect.colliderect(enemy.rect):
 							screen.blit(scoreboardIco, (screenWidth / 2 - scoreboardIco.get_width() / 2, 40))
 							scoreValue = font.render(str(score), False, (255, 255, 255))
@@ -315,10 +314,9 @@ def game():
 							pygame.mixer.Sound.play(crashSound)
 							gameOver()
 							running = False
-					if enemy.rect.y > 600:
+					if enemy.rect.y > 600 and enemy.name == "Enemy":
 							del enemies[count]
 							break
-			
 			# Ends program when x is pressed
 			for event in pygame.event.get():
 					if event.type == pygame.QUIT:
@@ -329,7 +327,7 @@ def game():
 			screen.blit(font.render(str(score), False, (255, 255, 255)), (50, 25))
 			print (player.rect.x, player.rect.y)
 			player.update(dt)
-			boss.update(dt, player.rect.x, player.rect.y, score)
+			# boss.update(dt, player.rect.x, player.rect.y)
 			pygame.display.flip()
 			clock.tick(30)
 
